@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Inventario">
+<title>Inventario</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { background: #0F1117; color: #E8EAF2; font-family: -apple-system, system-ui, sans-serif; max-width: 480px; margin: 0 auto; min-height: 100vh; }
+input, button, select { font-family: inherit; }
+input, select { background: #0F1117; border: 1.5px solid #2E334D; color: #E8EAF2; border-radius: 10px; padding: 10px 14px; font-size: 15px; width: 100%; outline: none; display: block; -webkit-appearance: none; }
+select option { background: #1A1D27; }
+.header { padding: 20px 20px 10px; border-bottom: 1px solid #2E334D; }
+.header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+.header p { color: #7B82A0; font-size: 13px; margin-top: 2px; }
+.actions { display: flex; gap: 8px; padding: 14px 20px; border-bottom: 1px solid #2E334D; }
+.btn { border-radius: 10px; padding: 10px 14px; font-weight: 700; font-size: 14px; border: 2px solid; cursor: pointer; }
+.btn-green { background: #27C77F; border-color: #27C77F; color: #fff; flex: 1; }
+.btn-red { background: #EF5858; border-color: #EF5858; color: #fff; flex: 1; }
+.btn-blue { background: #4F8EF7; border-color: #4F8EF7; color: #fff; }
+.btn-outline { background: transparent; width: 100%; }
+.btn-pdf { background: #2A3050; border-color: #4F8EF7; color: #4F8EF7; font-size: 13px; padding: 8px 14px; border-radius: 8px; border: 1.5px solid; cursor: pointer; font-weight: 700; }
+.tabs { display: flex; border-bottom: 1px solid #2E334D; }
+.tab { flex: 1; padding: 11px 0; background: none; border: none; border-bottom: 2.5px solid transparent; color: #7B82A0; font-weight: 400; font-size: 13px; cursor: pointer; }
+.tab.active { border-bottom-color: #4F8EF7; color: #4F8EF7; font-weight: 700; }
+.content { padding: 14px 20px 80px; }
+.card { background: #21253A; border-radius: 14px; padding: 14px 16px; border: 1px solid #2E334D; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+.card-form { background: #21253A; border-radius: 14px; padding: 14px; border: 1px solid #2E334D; margin-bottom: 14px; }
+.badge { border-radius: 6px; padding: 2px 10px; font-size: 12px; font-weight: 700; }
+.badge-green { background: #27C77F22; color: #27C77F; border: 1px solid #27C77F44; }
+.badge-yellow { background: #F7A84F22; color: #F7A84F; border: 1px solid #F7A84F44; }
+.badge-red { background: #EF585822; color: #EF5858; border: 1px solid #EF585844; }
+.badge-blue { background: #2A3050; color: #4F8EF7; border-radius: 6px; padding: 3px 10px; font-size: 12px; font-weight: 700; }
+.empty { text-align: center; padding: 60px 20px; color: #7B82A0; }
+.empty .icon { font-size: 40px; margin-bottom: 10px; }
+.mov-card { background: #21253A; border-radius: 12px; padding: 12px 14px; border: 1px solid #2E334D; margin-bottom: 8px; border-left: 4px solid; }
+.mov-row { display: flex; justify-content: space-between; align-items: flex-start; }
+.mov-meta { color: #7B82A0; font-size: 11px; margin-top: 4px; display: flex; flex-wrap: wrap; gap: 6px; }
+.mov-tag { background: #1A1D27; border-radius: 5px; padding: 2px 7px; font-size: 11px; }
+.label { color: #7B82A0; font-size: 12px; font-weight: 600; margin-bottom: 8px; letter-spacing: 0.5px; }
+.toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); color: #fff; border-radius: 10px; padding: 10px 20px; font-weight: 700; font-size: 14px; z-index: 200; white-space: nowrap; box-shadow: 0 4px 20px #0006; opacity: 0; pointer-events: none; transition: opacity .3s; }
+.overlay { position: fixed; inset: 0; background: #000a; z-index: 100; display: flex; align-items: flex-end; }
+.sheet { background: #1A1D27; border-radius: 20px 20px 0 0; width: 100%; max-height: 92vh; overflow-y: auto; padding: 20px; border-top: 3px solid; }
+.sheet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.sheet-title { font-weight: 800; font-size: 18px; }
+.close-btn { background: none; border: none; color: #7B82A0; font-size: 22px; cursor: pointer; }
+.sku-btn { background: #0F1117; border: 1.5px solid #2E334D; border-radius: 10px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 8px; cursor: pointer; }
+.sku-list { max-height: 200px; overflow-y: auto; margin-bottom: 8px; }
+.divider { border-top: 1px solid #2E334D; margin: 14px 0; }
+.qty-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
+.qty-btn { background: #21253A; border: 1.5px solid #2E334D; color: #E8EAF2; border-radius: 10px; width: 44px; height: 44px; font-size: 22px; flex-shrink: 0; cursor: pointer; }
+.qty-input { text-align: center; font-weight: 700; font-size: 20px; }
+.row { display: flex; gap: 8px; }
+.row2 { display: flex; gap: 8px; margin-bottom: 10px; }
+.stock-box { background: #21253A; border-radius: 12px; padding: 14px; margin-bottom: 12px; border: 1px solid #2E334D; }
+.warn { color: #EF5858; font-size: 13px; margin-bottom: 10px; }
+.hidden { display: none; }
+.ac-wrap { position: relative; margin-bottom: 10px; }
+.ac-drop { position: absolute; top: 100%; left: 0; right: 0; background: #21253A; border: 1.5px solid #2E334D; border-radius: 0 0 10px 10px; z-index: 50; max-height: 160px; overflow-y: auto; }
+.ac-item { padding: 10px 14px; font-size: 14px; cursor: pointer; border-bottom: 1px solid #2E334D; color: #E8EAF2; }
+.ac-item:last-child { border-bottom: none; }
+.ac-item:active { background: #2E334D; }
+.price-box { background: #0F1117; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; border: 1px solid #2E334D; }
+.price-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+.price-row:last-child { margin-bottom: 0; font-weight: 700; font-size: 14px; }
+.price-row span:first-child { color: #7B82A0; }
+.seg { display: flex; border-radius: 10px; overflow: hidden; border: 1.5px solid #2E334D; margin-bottom: 10px; }
+.seg-btn { flex: 1; padding: 9px 0; background: transparent; border: none; color: #7B82A0; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s; }
+.seg-btn.active { color: #fff; }
+.pago-btn { flex: 1; padding: 9px 4px; background: transparent; border: none; border-right: 1px solid #2E334D; color: #7B82A0; font-size: 12px; font-weight: 600; cursor: pointer; }
+.pago-btn:last-child { border-right: none; }
+.pago-btn.active { color: #fff; }
+.pago-wrap { display: flex; border-radius: 10px; overflow: hidden; border: 1.5px solid #2E334D; margin-bottom: 10px; }
+.mb10 { margin-bottom: 10px; }
+.mb12 { margin-bottom: 12px; }
+.mb14 { margin-bottom: 14px; }
+
+/* Print */
+@media print {
+  body { background: #fff !important; color: #111 !important; max-width: 100% !important; font-size: 12px; }
+  .header, .actions, .tabs, .toast, .overlay, #view-movimientos, #view-inventario, .btn-pdf, .card-form { display: none !important; }
+  #view-catalogo { display: block !important; padding: 0 !important; }
+  #cat-list .card { background: #fff !important; border: 1px solid #ddd !important; border-radius: 0 !important; margin-bottom: 0 !important; padding: 8px 12px !important; border-bottom: none !important; page-break-inside: avoid; }
+  #cat-list .card:last-child { border-bottom: 1px solid #ddd !important; }
+  .badge-blue { background: #eef3ff !important; color: #2a52b8 !important; border: 1px solid #c0d0f5 !important; border-radius: 4px !important; }
+  #pdf-header { display: block !important; }
+  #pdf-table-header { display: flex !important; justify-content: space-between; padding: 6px 12px; background: #f4f4f4; border: 1px solid #ddd; font-size: 11px; font-weight: 700; color: #555; margin-bottom: 0; }
+}
+#pdf-header { display: none; padding: 0 0 16px 0; border-bottom: 2px solid #111; margin-bottom: 12px; }
+#pdf-header h2 { font-size: 18px; font-weight: 800; margin-bottom: 2px; }
+#pdf-header p { font-size: 11px; color: #555; }
+#pdf-table-header { display: none; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📦 Inventario</h1>
+  <p id="resumen">0 productos · 0 unidades</p>
+</div>
+
+<div class="actions">
+  <button class="btn btn-green" onclick="openModal('ingreso')">▲ Compra</button>
+  <button class="btn btn-red" onclick="openModal('egreso')">▼ Venta</button>
+  <button class="btn" style="background:#2A3050;border-color:#7B82A0;color:#7B82A0;font-size:13px" onclick="openModal('ajuste')">⚙ Ajuste</button>
+</div>
+
+<div class="tabs">
+  <button class="tab active" id="tab-inventario" onclick="setTab('inventario')">Stock</button>
+  <button class="tab" id="tab-movimientos" onclick="setTab('movimientos')">Movimientos</button>
+  <button class="tab" id="tab-catalogo" onclick="setTab('catalogo')">Catálogo</button>
+</div>
+
+<!-- TAB: Stock -->
+<div class="content" id="view-inventario">
+  <div id="inv-list"></div>
+</div>
+
+<!-- TAB: Movimientos -->
+<div class="content hidden" id="view-movimientos">
+  <div id="mov-list"></div>
+</div>
+
+<!-- TAB: Catálogo -->
+<div class="content hidden" id="view-catalogo">
+  <div id="pdf-header">
+    <h2>📋 Catálogo de SKUs</h2>
+    <p id="pdf-fecha"></p>
+  </div>
+  <div id="pdf-table-header"><span>PRODUCTO</span><span>SKU</span></div>
+  <div class="card-form">
+    <p class="label">AGREGAR AL CATÁLOGO</p>
+    <input id="input-newsku" placeholder="SKU" autocomplete="off" autocorrect="off" spellcheck="false" class="mb10">
+    <input id="input-newnombre" placeholder="Nombre del producto" autocomplete="off" class="mb10">
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-blue" onclick="addCatalog()" style="flex:1">Agregar</button>
+      <button class="btn btn-pdf" onclick="exportPDF()">⬇ PDF</button>
+    </div>
+  </div>
+  <div id="cat-list"></div>
+</div>
+
+<!-- Modal -->
+<div class="overlay hidden" id="modal" onclick="closeModal()">
+  <div class="sheet" id="modal-sheet" onclick="event.stopPropagation()">
+    <div class="sheet-header">
+      <span class="sheet-title" id="modal-title"></span>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+
+    <!-- Step: select -->
+    <div id="step-select">
+      <p style="color:#7B82A0;font-size:13px;margin-bottom:10px">Selecciona del catálogo o ingresa manualmente</p>
+      <input id="input-search" placeholder="Buscar SKU o nombre…" autocomplete="off" autocorrect="off" spellcheck="false" class="mb10" oninput="renderSkuList()">
+      <div class="sku-list" id="sku-list"></div>
+      <div class="divider"></div>
+      <button class="btn btn-outline" id="btn-manual" onclick="setStep('manual')">+ Ingresar SKU manualmente</button>
+    </div>
+
+    <!-- Step: manual -->
+    <div id="step-manual" class="hidden">
+      <p class="label">SKU</p>
+      <input id="input-skumanual" placeholder="Código SKU" autocomplete="off" autocorrect="off" spellcheck="false" class="mb10" oninput="onSkuManualInput()">
+      <p class="label">Descripción</p>
+      <div class="ac-wrap">
+        <input id="input-nombremanual" placeholder="Descripción del producto" autocomplete="off" oninput="onNombreInput()" onfocus="onNombreInput()">
+        <div class="ac-drop hidden" id="ac-drop"></div>
+      </div>
+      <div class="row">
+        <button class="btn btn-outline" style="flex:1;border-color:#7B82A0;color:#7B82A0" onclick="setStep('select')">← Atrás</button>
+        <button class="btn" id="btn-manual-next" style="flex:1;color:#fff" onclick="goToDetails()">Continuar</button>
+      </div>
+    </div>
+
+    <!-- Step: details (precio, pago, cantidad) -->
+    <div id="step-details" class="hidden">
+      <div class="stock-box mb12" id="confirm-sku-info"></div>
+
+      <!-- Solo compra/venta: precio -->
+      <div id="precio-section">
+        <p class="label">PRECIO UNITARIO</p>
+        <input id="input-precio" type="number" min="0" placeholder="0" class="mb10" oninput="calcPrecio()">
+
+        <p class="label">TIPO DE PRECIO</p>
+        <div class="seg mb10" id="seg-iva">
+          <button class="seg-btn active" id="seg-neto" onclick="setIvaTipo('neto')">Neto + IVA</button>
+          <button class="seg-btn" id="seg-incluido" onclick="setIvaTipo('incluido')">IVA incluido</button>
+        </div>
+
+        <div class="price-box mb10" id="price-preview">
+          <div class="price-row"><span>Neto</span><span id="p-neto">$0</span></div>
+          <div class="price-row"><span>IVA (19%)</span><span id="p-iva">$0</span></div>
+          <div class="price-row"><span>Total</span><span id="p-total">$0</span></div>
+        </div>
+
+        <p class="label">MEDIO DE PAGO</p>
+        <div class="pago-wrap mb12" id="pago-wrap">
+          <button class="pago-btn active" id="pago-efectivo" onclick="setPago('efectivo')">💵 Efectivo</button>
+          <button class="pago-btn" id="pago-transferencia" onclick="setPago('transferencia')">🏦 Transfer.</button>
+          <button class="pago-btn" id="pago-debito" onclick="setPago('debito')">💳 Débito</button>
+        </div>
+      </div>
+
+      <p class="label">CANTIDAD</p>
+      <div class="qty-row">
+        <button class="qty-btn" onclick="changeQty(-1)">−</button>
+        <input class="qty-input" id="input-qty" type="number" min="1" value="1" oninput="updateWarn()">
+        <button class="qty-btn" onclick="changeQty(1)">+</button>
+      </div>
+      <p class="warn hidden" id="warn-stock"></p>
+      <div class="row">
+        <button class="btn btn-outline" style="flex:1;border-color:#7B82A0;color:#7B82A0" onclick="setStep('select')">← Atrás</button>
+        <button class="btn" id="btn-confirmar" style="flex:2;color:#fff" onclick="doMovimiento()">Confirmar</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const IVA = 0.19;
+const DEFAULT_CATALOG = [
+  { sku: "PROD-001", nombre: "Arroz 1kg" },
+  { sku: "PROD-002", nombre: "Aceite 1L" },
+  { sku: "PROD-003", nombre: "Harina 1kg" },
+];
+
+function load(key, fb) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fb; } catch { return fb; } }
+function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+
+let catalog     = load("inv:catalog", DEFAULT_CATALOG);
+let inventory   = load("inv:inventory", {});
+let movimientos = load("inv:movimientos", []);
+
+// modal state
+let currentTipo   = "ingreso";
+let currentSkuSel = "";
+let ivaTipo       = "neto";      // "neto" | "incluido"
+let pagoMedio     = "efectivo";
+
+// ─── Toast ────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, color) {
+  const el = document.getElementById("toast");
+  el.textContent = msg; el.style.background = color; el.style.opacity = "1";
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.style.opacity = "0", 2400);
+}
+
+// ─── Tabs ─────────────────────────────────────────────────────────
+function setTab(tab) {
+  ["inventario","movimientos","catalogo"].forEach(t => {
+    document.getElementById("view-" + t).classList.toggle("hidden", t !== tab);
+    document.getElementById("tab-" + t).classList.toggle("active", t === tab);
+  });
+}
+
+// ─── Format ───────────────────────────────────────────────────────
+function fmt(n) { return "$" + Math.round(n).toLocaleString("es-CL"); }
+
+// ─── Auto-agregar al catálogo ─────────────────────────────────────
+function ensureCatalog(sku, nombre) {
+  if (!catalog.find(c => c.sku === sku)) {
+    catalog.push({ sku, nombre: nombre || sku });
+    save("inv:catalog", catalog);
+    renderCatalogo();
+  }
+}
+
+// ─── Render Stock ─────────────────────────────────────────────────
+function renderResumen() {
+  const list = Object.values(inventory);
+  document.getElementById("resumen").textContent =
+    `${list.length} productos · ${list.reduce((s,p)=>s+p.stock,0)} unidades`;
+}
+
+function renderInventario() {
+  const list = Object.values(inventory).sort((a,b)=>a.sku.localeCompare(b.sku));
+  const el = document.getElementById("inv-list");
+  if (!list.length) { el.innerHTML = `<div class="empty"><div class="icon">🗃</div><p>Sin productos aún.</p></div>`; return; }
+  el.innerHTML = list.map(p => {
+    const cls = p.stock===0?"badge-red":p.stock<5?"badge-yellow":"badge-green";
+    const precio = p.lastPrecioTotal ? `<p style="color:#7B82A0;font-size:11px;margin-top:2px">Último: ${fmt(p.lastPrecioTotal)} c/u</p>` : "";
+    return `<div class="card">
+      <div>
+        <p style="font-weight:700;font-size:15px">${p.nombre}</p>
+        <p style="color:#7B82A0;font-size:12px;margin-top:1px">${p.sku}</p>
+        ${precio}
+      </div>
+      <span class="badge ${cls}">${p.stock} u</span>
+    </div>`;
+  }).join("");
+}
+
+// ─── Render Movimientos ───────────────────────────────────────────
+function renderMovimientos() {
+  const el = document.getElementById("mov-list");
+  if (!movimientos.length) { el.innerHTML = `<div class="empty"><div class="icon">📋</div><p>Sin movimientos.</p></div>`; return; }
+  el.innerHTML = movimientos.map(m => {
+    const color = m.tipo==="ingreso"?"#27C77F":m.tipo==="egreso"?"#EF5858":"#7B82A0";
+    const signo = m.tipo==="ingreso"?"+":m.tipo==="egreso"?"−":"±";
+    const precioInfo = m.precioTotal
+      ? `<span class="mov-tag">${fmt(m.precioTotal)} total</span><span class="mov-tag">Neto ${fmt(m.precioNeto)}</span><span class="mov-tag">IVA ${fmt(m.precioIva)}</span><span class="mov-tag">${m.pago}</span>`
+      : "";
+    return `<div class="mov-card" style="border-left-color:${color}">
+      <div class="mov-row">
+        <div>
+          <p style="font-weight:600;font-size:14px">${m.nombre}</p>
+          <p style="color:#7B82A0;font-size:11px;margin-top:1px">${m.sku} · ${m.fecha}</p>
+          ${precioInfo ? `<div class="mov-meta">${precioInfo}</div>` : ""}
+        </div>
+        <span style="color:${color};font-weight:800;font-size:16px;margin-left:8px;white-space:nowrap">${signo}${m.qty}</span>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ─── Render Catálogo ──────────────────────────────────────────────
+function renderCatalogo() {
+  const sorted = [...catalog].sort((a,b)=>a.sku.localeCompare(b.sku));
+  document.getElementById("cat-list").innerHTML = sorted.map(c => `
+    <div class="card">
+      <span style="font-weight:600;font-size:14px">${c.nombre}</span>
+      <span class="badge-blue">${c.sku}</span>
+    </div>`).join("");
+}
+
+function addCatalog() {
+  const sku    = document.getElementById("input-newsku").value.trim().toUpperCase();
+  const nombre = document.getElementById("input-newnombre").value.trim();
+  if (!sku || !nombre) return;
+  if (catalog.find(c=>c.sku===sku)) { showToast("SKU ya existe en catálogo", "#EF5858"); return; }
+  catalog.push({ sku, nombre });
+  save("inv:catalog", catalog);
+  document.getElementById("input-newsku").value = "";
+  document.getElementById("input-newnombre").value = "";
+  renderCatalogo();
+  showToast(`${sku} agregado`, "#4F8EF7");
+}
+
+// ─── Autocomplete descripción ─────────────────────────────────────
+function onSkuManualInput() {
+  const sku = document.getElementById("input-skumanual").value.trim().toUpperCase();
+  document.getElementById("input-skumanual").value = sku;
+  const entry = catalog.find(c => c.sku === sku);
+  if (entry) {
+    document.getElementById("input-nombremanual").value = entry.nombre;
+    closeAcDrop();
+  } else {
+    onNombreInput();
+  }
+}
+
+function onNombreInput() {
+  const q = document.getElementById("input-nombremanual").value.toLowerCase();
+  const drop = document.getElementById("ac-drop");
+  // Busca en catálogo por nombre
+  const matches = catalog.filter(c => c.nombre.toLowerCase().includes(q) && q.length > 0);
+  if (!matches.length) { drop.classList.add("hidden"); return; }
+  drop.innerHTML = matches.slice(0,6).map(c =>
+    `<div class="ac-item" onmousedown="pickAc('${c.sku}','${c.nombre.replace(/'/g,"\\'")}')">
+      <span style="font-weight:600">${c.nombre}</span>
+      <span style="color:#7B82A0;font-size:12px;margin-left:6px">${c.sku}</span>
+    </div>`
+  ).join("");
+  drop.classList.remove("hidden");
+}
+
+function pickAc(sku, nombre) {
+  document.getElementById("input-skumanual").value = sku;
+  document.getElementById("input-nombremanual").value = nombre;
+  closeAcDrop();
+}
+
+function closeAcDrop() {
+  document.getElementById("ac-drop").classList.add("hidden");
+}
+
+document.addEventListener("click", e => {
+  if (!e.target.closest(".ac-wrap")) closeAcDrop();
+});
+
+// ─── Precio ───────────────────────────────────────────────────────
+function setIvaTipo(tipo) {
+  ivaTipo = tipo;
+  document.getElementById("seg-neto").classList.toggle("active", tipo==="neto");
+  document.getElementById("seg-incluido").classList.toggle("active", tipo==="incluido");
+  const c = currentTipo==="ingreso"?"#27C77F":"#EF5858";
+  document.getElementById("seg-neto").style.background    = tipo==="neto"    ? c : "transparent";
+  document.getElementById("seg-incluido").style.background = tipo==="incluido"? c : "transparent";
+  calcPrecio();
+}
+
+function calcPrecio() {
+  const raw = parseFloat(document.getElementById("input-precio").value) || 0;
+  let neto, iva, total;
+  if (ivaTipo === "neto") {
+    neto  = raw;
+    iva   = raw * IVA;
+    total = raw + iva;
+  } else {
+    total = raw;
+    neto  = raw / (1 + IVA);
+    iva   = raw - neto;
+  }
+  document.getElementById("p-neto").textContent  = fmt(neto);
+  document.getElementById("p-iva").textContent   = fmt(iva);
+  document.getElementById("p-total").textContent = fmt(total);
+}
+
+function setPago(medio) {
+  pagoMedio = medio;
+  ["efectivo","transferencia","debito"].forEach(m => {
+    const btn = document.getElementById("pago-" + m);
+    const c   = currentTipo==="ingreso"?"#27C77F":"#EF5858";
+    btn.classList.toggle("active", m===medio);
+    btn.style.background = m===medio ? c+"33" : "transparent";
+    btn.style.color      = m===medio ? c : "#7B82A0";
+  });
+}
+
+// ─── Modal ────────────────────────────────────────────────────────
+function modalColor() { return currentTipo==="ingreso"?"#27C77F":currentTipo==="egreso"?"#EF5858":"#7B82A0"; }
+
+function openModal(tipo) {
+  currentTipo   = tipo;
+  currentSkuSel = "";
+  ivaTipo       = "neto";
+  pagoMedio     = "efectivo";
+
+  const c = modalColor();
+  document.getElementById("modal").classList.remove("hidden");
+  document.getElementById("modal-sheet").style.borderTopColor = c;
+  document.getElementById("modal-title").style.color = c;
+  document.getElementById("modal-title").textContent =
+    tipo==="ingreso" ? "▲ Compra" : tipo==="egreso" ? "▼ Venta" : "⚙ Ajuste de inventario";
+
+  document.getElementById("btn-manual").style.borderColor = c;
+  document.getElementById("btn-manual").style.color = c;
+  document.getElementById("btn-manual-next").style.background   = c;
+  document.getElementById("btn-manual-next").style.borderColor  = c;
+
+  // precio section solo para compra/venta
+  document.getElementById("precio-section").classList.toggle("hidden", tipo==="ajuste");
+
+  document.getElementById("input-search").value = "";
+  document.getElementById("input-precio").value = "";
+  document.getElementById("input-qty").value    = 1;
+  calcPrecio();
+  setIvaTipo("neto");
+  setPago("efectivo");
+  setStep("select");
+  renderSkuList();
+}
+
+function closeModal() { document.getElementById("modal").classList.add("hidden"); }
+
+function setStep(step) {
+  ["select","manual","details"].forEach(s =>
+    document.getElementById("step-" + s).classList.toggle("hidden", s !== step)
+  );
+  if (step==="select") setTimeout(()=>document.getElementById("input-search").focus(), 100);
+  if (step==="manual") setTimeout(()=>document.getElementById("input-skumanual").focus(), 100);
+}
+
+function renderSkuList() {
+  const q = document.getElementById("input-search").value.toLowerCase();
+  const filtered = catalog.filter(c =>
+    c.sku.toLowerCase().includes(q) || c.nombre.toLowerCase().includes(q)
+  );
+  const el = document.getElementById("sku-list");
+  if (!filtered.length) { el.innerHTML = `<p style="color:#7B82A0;text-align:center;font-size:13px;padding:10px">Sin resultados</p>`; return; }
+  el.innerHTML = filtered.map(c => `
+    <button class="sku-btn" onclick="selectSku('${c.sku}')">
+      <span style="color:#E8EAF2;font-weight:600;font-size:14px">${c.nombre}</span>
+      <span style="color:#7B82A0;font-size:12px">${c.sku}</span>
+    </button>`).join("");
+}
+
+function selectSku(sku) {
+  currentSkuSel = sku;
+  const entry   = catalog.find(c=>c.sku===sku);
+  showDetails(sku, entry?.nombre || sku);
+}
+
+function goToDetails() {
+  const sku    = document.getElementById("input-skumanual").value.trim().toUpperCase();
+  const nombre = document.getElementById("input-nombremanual").value.trim();
+  if (!sku) return;
+  currentSkuSel = sku;
+  showDetails(sku, nombre || sku);
+}
+
+function showDetails(sku, nombre) {
+  const stockActual = inventory[sku]?.stock ?? 0;
+  const isEgreso    = currentTipo === "egreso";
+  const c           = modalColor();
+
+  document.getElementById("confirm-sku-info").innerHTML = `
+    <p style="color:#7B82A0;font-size:11px;margin-bottom:2px">SKU</p>
+    <p style="font-weight:700;font-size:16px;margin-bottom:4px">${sku}</p>
+    <p style="color:#7B82A0;font-size:13px">${nombre}</p>
+    ${isEgreso||currentTipo==="ajuste" ? `<p style="color:#7B82A0;font-size:12px;margin-top:6px">Stock actual: <strong style="color:#E8EAF2">${stockActual}</strong></p>` : ""}
+  `;
+
+  const btn = document.getElementById("btn-confirmar");
+  btn.style.background  = c;
+  btn.style.borderColor = c;
+  btn.textContent = currentTipo==="ingreso"?"Confirmar compra":currentTipo==="egreso"?"Confirmar venta":"Confirmar ajuste";
+
+  document.getElementById("input-qty").value = 1;
+  document.getElementById("warn-stock").classList.add("hidden");
+  setStep("details");
+}
+
+function changeQty(d) {
+  const el = document.getElementById("input-qty");
+  el.value = Math.max(1, Number(el.value)+d);
+  updateWarn();
+}
+
+function updateWarn() {
+  if (currentTipo==="egreso") {
+    const qty   = Number(document.getElementById("input-qty").value);
+    const stock = inventory[currentSkuSel]?.stock ?? 0;
+    const warn  = document.getElementById("warn-stock");
+    const btn   = document.getElementById("btn-confirmar");
+    if (qty > stock) {
+      warn.textContent = `⚠ Stock insuficiente (${stock} disponibles)`;
+      warn.classList.remove("hidden");
+      btn.style.opacity = "0.4";
+    } else {
+      warn.classList.add("hidden");
+      btn.style.opacity = "1";
+    }
+  }
+}
+
+function doMovimiento() {
+  const qty  = Number(document.getElementById("input-qty").value);
+  const sku  = currentSkuSel;
+  const catalogEntry = catalog.find(c=>c.sku===sku);
+  const nombre = catalogEntry?.nombre
+    || document.getElementById("input-nombremanual")?.value.trim()
+    || sku;
+  const stockActual = inventory[sku]?.stock ?? 0;
+
+  if (currentTipo==="egreso" && qty > stockActual) return;
+
+  // Precio
+  let precioNeto=0, precioIva=0, precioTotal=0;
+  if (currentTipo !== "ajuste") {
+    const raw = parseFloat(document.getElementById("input-precio").value) || 0;
+    if (ivaTipo==="neto") {
+      precioNeto  = raw * qty;
+      precioIva   = precioNeto * IVA;
+      precioTotal = precioNeto + precioIva;
+    } else {
+      precioTotal = raw * qty;
+      precioNeto  = precioTotal / (1+IVA);
+      precioIva   = precioTotal - precioNeto;
+    }
+  }
+
+  // Actualizar inventario
+  const prev = inventory[sku] || { sku, nombre, stock:0 };
+  if (currentTipo==="ingreso") {
+    inventory[sku] = { ...prev, nombre, stock: prev.stock + qty, lastPrecioTotal: precioTotal/qty||prev.lastPrecioTotal };
+  } else if (currentTipo==="egreso") {
+    inventory[sku] = { ...prev, nombre, stock: prev.stock - qty, lastPrecioTotal: precioTotal/qty||prev.lastPrecioTotal };
+  } else {
+    // ajuste: suma o resta según qty (aquí siempre suma; ajuste libre)
+    inventory[sku] = { ...prev, nombre, stock: prev.stock + qty };
+  }
+
+  // Auto-agregar al catálogo (primera vez)
+  ensureCatalog(sku, nombre);
+
+  // Movimiento
+  const mov = {
+    id: Date.now(), sku, nombre, qty, tipo: currentTipo,
+    fecha: new Date().toLocaleString("es-CL", { dateStyle: "short", timeStyle: "short" }),
+    ...(currentTipo!=="ajuste" && {
+      precioNeto: Math.round(precioNeto),
+      precioIva:  Math.round(precioIva),
+      precioTotal:Math.round(precioTotal),
+      ivaTipo, pago: pagoMedio,
+    }),
+  };
+  movimientos.unshift(mov);
+
+  save("inv:inventory", inventory);
+  save("inv:movimientos", movimientos);
+
+  closeModal();
+  renderResumen();
+  renderInventario();
+  renderMovimientos();
+
+  const signo = currentTipo==="ingreso"?"+":currentTipo==="egreso"?"−":"±";
+  const c     = currentTipo==="ingreso"?"#27C77F":currentTipo==="egreso"?"#EF5858":"#7B82A0";
+  showToast(`${signo}${qty} ${sku}${precioTotal ? " · " + fmt(precioTotal) : ""}`, c);
+}
+
+// ─── PDF ──────────────────────────────────────────────────────────
+function exportPDF() {
+  document.getElementById("pdf-fecha").textContent =
+    `Generado: ${new Date().toLocaleString("es-CL",{dateStyle:"long",timeStyle:"short"})}  ·  ${catalog.length} productos`;
+  window.print();
+}
+
+// ─── Init ─────────────────────────────────────────────────────────
+renderResumen();
+renderInventario();
+renderMovimientos();
+renderCatalogo();
+</script>
+</body>
+</html>
